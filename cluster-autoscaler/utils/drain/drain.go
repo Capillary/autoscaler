@@ -18,6 +18,9 @@ package drain
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	apiv1 "k8s.io/api/core/v1"
@@ -263,10 +266,35 @@ func checkKubeSystemPDBs(pod *apiv1.Pod, pdbs []*policyv1.PodDisruptionBudget) (
 
 // This checks if pod has PodSafeToEvictKey annotation
 func hasSafeToEvictAnnotation(pod *apiv1.Pod) bool {
+	if evictionOverride(pod) {
+		return true
+	}
 	return pod.GetAnnotations()[PodSafeToEvictKey] == "true"
 }
 
 // This checks if pod has PodSafeToEvictKey annotation set to false
 func hasNotSafeToEvictAnnotation(pod *apiv1.Pod) bool {
-	return pod.GetAnnotations()[PodSafeToEvictKey] == "false"
+	if evictionOverride(pod) {
+		return false
+	}
+	return pod.GetAnnotations()[PodSafeToEvictKey] == "false" || hasNeverSafeToEvictAnnotation(pod)
+}
+
+// Override the eviction status based on downtime hours
+func evictionOverride(pod *apiv1.Pod) bool {
+	safeToEvictHours, override := os.LookupEnv("SAFE_TO_EVICT_HOURS")
+	if override && !hasNeverSafeToEvictAnnotation(pod) {
+		hour, _ , _ := time.Now().Clock()
+		s := strings.Split(safeToEvictHours,",")
+		for _, ele := range s {
+			if strconv.Itoa(hour) == ele {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func hasNeverSafeToEvictAnnotation(pod *apiv1.Pod) bool {
+	return pod.GetAnnotations()[PodSafeToEvictKey] == "never"
 }
