@@ -175,6 +175,7 @@ var (
 	concurrentGceRefreshes             = flag.Int("gce-concurrent-refreshes", 1, "Maximum number of concurrent refreshes per cloud object type.")
 	enableProfiling                    = flag.Bool("profiling", false, "Is debug/pprof endpoint enabled")
 	clusterAPICloudConfigAuthoritative = flag.Bool("clusterapi-cloud-config-authoritative", false, "Treat the cloud-config flag authoritatively (do not fallback to using kubeconfig flag). ClusterAPI only")
+	cordonNodeBeforeTerminate          = flag.Bool("cordon-node-before-terminating", false, "Should CA cordon nodes before terminating during downscale process")
 )
 
 func createAutoscalingOptions() config.AutoscalingOptions {
@@ -245,6 +246,7 @@ func createAutoscalingOptions() config.AutoscalingOptions {
 		AWSUseStaticInstanceList:           *awsUseStaticInstanceList,
 		ConcurrentGceRefreshes:             *concurrentGceRefreshes,
 		ClusterAPICloudConfigAuthoritative: *clusterAPICloudConfigAuthoritative,
+		CordonNodeBeforeTerminate:          *cordonNodeBeforeTerminate,
 	}
 }
 
